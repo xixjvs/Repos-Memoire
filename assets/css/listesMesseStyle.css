@@ -1,0 +1,11 @@
+/* Couleur des boutons personnalisée */
+.btn-custom {
+    background-color: #f1c88b;
+    color: white;
+    border: none;
+}
+
+.btn-custom:hover {
+    background-color: #f7ddb5; /* Couleur légèrement plus foncée au survol */
+}
+
