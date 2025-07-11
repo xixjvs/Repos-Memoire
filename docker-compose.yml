@@ -17,7 +17,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: app_pass
-      MYSQL_DATABASE: app_memoire_db
+      MYSQL_DATABASE: demandegrace
       MYSQL_USER: app_user
       MYSQL_PASSWORD: app_pass
     ports:
