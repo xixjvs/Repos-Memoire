@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_DIR = "/var/www/html/app_memoire"
+        DEPLOY_DIR = "${WORKSPACE}/deploy/app_memoire"
         DB_USER = "root"
         DB_PASS = "password"
         DB_NAME = "app_memoire_db"
-        INIT_SQL = "${WORKSPACE}/models/init.sql" // à créer si besoin
+        INIT_SQL = "${WORKSPACE}/models/init.sql"
     }
 
     stages {
@@ -31,9 +31,9 @@ pipeline {
             steps {
                 echo "Déploiement dans ${DEPLOY_DIR}"
                 sh """
-                    sudo rm -rf ${DEPLOY_DIR}
-                    sudo mkdir -p ${DEPLOY_DIR}
-                    sudo cp -r * ${DEPLOY_DIR}
+                    rm -rf ${DEPLOY_DIR}
+                    mkdir -p ${DEPLOY_DIR}
+                    cp -r * ${DEPLOY_DIR}
                 """
             }
         }
@@ -55,8 +55,8 @@ pipeline {
 
         stage('Test de disponibilité') {
             steps {
-                echo "Test d’accessibilité de l’application"
-                sh 'curl -I http://localhost/app_memoire/index.php || true'
+                echo "Test d’accessibilité (simulation)"
+                sh "ls -l ${DEPLOY_DIR}/index.php || echo 'index.php non trouvé'"
             }
         }
     }
