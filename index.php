@@ -1,4 +1,4 @@
-    <?php 
+<?php 
 	session_start();
 	require_once("views/includes/mesFonctions.php");
 	require_once("models/database.php");

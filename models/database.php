@@ -1,14 +1,13 @@
 <?php
 
 
-try
-{
-    $db = new PDO("mysql:dbname=demandegrace;host=localhost", "root", "");
+try {
+    $db = new PDO("mysql:host=db;dbname=demandegrace;charset=utf8", "root", "password");
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erreur : " . $e->getMessage() . " à la ligne:" . __LINE__);
 }
-catch(PDOException $e)
-{
-    die("Erreur : " . $e->getMessage(). "a la ligne:".__LINE__);
-}
+
 
 function seconnecter($email)
 {
