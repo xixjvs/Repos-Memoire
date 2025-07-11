@@ -2,7 +2,7 @@
 
 
 try {
-    $db = new PDO("mysql:host=db;dbname=demandegrace;charset=utf8", "root", "password");
+    $db = new PDO("mysql:host=db;dbname=demandegrace;charset=utf8", "app_user", "app_pass");
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Erreur : " . $e->getMessage() . " à la ligne:" . __LINE__);
