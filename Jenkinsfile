@@ -16,7 +16,7 @@ pipeline {
                 deleteDir()
 
                 echo "Clonage du projet"
-                git url: 'https://github.com/xixjvs/Repos-Memoire.git', branch: 'main'
+                git url: 'https://github.com/xixjvs/Repos-Memoire.git', branch: 'master'
             }
         }
 
