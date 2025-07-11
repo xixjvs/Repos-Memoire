@@ -30,13 +30,14 @@ pipeline {
         stage('Déploiement des fichiers') {
             steps {
                 echo "Déploiement dans ${DEPLOY_DIR}"
-                sh """
-                    rm -rf ${DEPLOY_DIR}
-                    mkdir -p ${DEPLOY_DIR}
-                    cp -r * ${DEPLOY_DIR}
-                """
+                    sh """
+                        rm -rf ${DEPLOY_DIR}
+                        mkdir -p ${DEPLOY_DIR}
+                        rsync -av --exclude='deploy' ./ ${DEPLOY_DIR}/
+                 """
             }
         }
+
 
         stage('Base de données') {
             steps {
