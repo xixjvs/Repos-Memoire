@@ -7,6 +7,13 @@ pipeline {
         DB_PASS = "password"
         DB_NAME = "app_memoire_db"
         INIT_SQL = "${WORKSPACE}/models/init.sql"
+
+         // Configuration Docker
+        DOCKER_HUB_CREDENTIALS = 'jnk-creds' // ID Jenkins Credentials
+        DOCKERHUB_USER = 'pauljosephd'       // ton nom d’utilisateur Docker Hub
+        
+        DOCKER_IMAGE = "xixjvs/app_memoire" // ← ton Docker Hub
+        DOCKER_TAG = "latest"
     }
 
     stages {
@@ -27,19 +34,18 @@ pipeline {
             }
         }
 
-        stage('Déploiement des fichiers') {
+        stage('Déploiement local (facultatif)') {
             steps {
-                echo "Déploiement dans ${DEPLOY_DIR}"
-                    sh """
-                        rm -rf ${DEPLOY_DIR}
-                        mkdir -p ${DEPLOY_DIR}
-                        rsync -av --exclude='deploy' ./ ${DEPLOY_DIR}/
-                 """
+                echo "Déploiement local dans ${DEPLOY_DIR}"
+                sh """
+                    rm -rf ${DEPLOY_DIR}
+                    mkdir -p ${DEPLOY_DIR}
+                    rsync -av --exclude='deploy' ./ ${DEPLOY_DIR}/
+                """
             }
         }
 
-
-        stage('Base de données') {
+        stage('Base de données (facultatif)') {
             steps {
                 script {
                     def sqlExists = fileExists(INIT_SQL)
@@ -54,17 +60,36 @@ pipeline {
             }
         }
 
-        stage('Test de disponibilité') {
+        stage('Construction Docker') {
             steps {
-                echo "Test d’accessibilité (simulation)"
-                sh "ls -l ${DEPLOY_DIR}/index.php || echo 'index.php non trouvé'"
+                echo "Construction de l'image Docker"
+                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+            }
+        }
+
+        stage('Connexion à Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
+            }
+        }
+
+        stage('Push vers Docker Hub') {
+            steps {
+                echo "Push de l’image ${DOCKER_IMAGE}:${DOCKER_TAG} sur Docker Hub"
+                sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
             }
         }
     }
 
     post {
+        always {
+            echo "Nettoyage des identifiants"
+            sh "docker logout"
+        }
         success {
-            echo "✅ Pipeline terminé avec succès"
+            echo "✅ Pipeline terminé avec succès et image publiée sur Docker Hub"
         }
         failure {
             echo "❌ Le pipeline a échoué"
