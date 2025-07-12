@@ -10,8 +10,6 @@ services:
       - .:/var/www/html
     depends_on:
       - db
-    networks:
-      - monitoring
 
   db:
     image: mysql:5.7
@@ -26,6 +24,17 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
     networks:
       - monitoring
 
@@ -51,13 +60,9 @@ services:
     networks:
       - monitoring
 
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    ports:
-      - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/v
+volumes:
+  db_data:
+  grafana_data:
+
+networks:
+  monitoring:
