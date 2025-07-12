@@ -14,6 +14,10 @@ pipeline {
         
         DOCKER_IMAGE = "pauljosephd/app_memoire" // ← ton Docker Hub
         DOCKER_TAG = "latest"
+
+        //sonarqube analyse
+        SONAR_PROJECT_KEY = "app_memoire"
+        SONAR_HOST_URL = "http://localhost:9000"  // ou l’URL de ton serveur SonarQube
     }
 
     stages {
@@ -32,8 +36,33 @@ pipeline {
                 echo "Vérification des erreurs PHP"
                 sh 'find . -name "*.php" -exec php -l {} \\;'
             }
-        }
+     }
 
+        stage('Analyse SonarQube') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            withCredentials([string(credentialsId: 'toker-server', variable: 'SONAR_TOKEN')]) {
+                echo '🔍 Exécution de l\'analyse SonarQube'
+                sh """
+                    export PATH=$PATH:/var/lib/jenkins/sonar-scanner-5.0.1.3006-linux/bin
+                    sonar-scanner \
+                    -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.login=$SONAR_TOKEN \
+                    -Dsonar.sources=. \
+                    -Dsonar.exclusions=**/vendor/**,**/node_modules/** \
+                    -Dsonar.language=php \
+                    -Dsonar.php.file.suffixes=php \
+                    -Dsonar.sourceEncoding=UTF-8 \
+                    -X
+                """
+            }
+        }
+    }
+}
+    
+
+        
         stage('Déploiement local (facultatif)') {
             steps {
                 echo "Déploiement local dans ${DEPLOY_DIR}"
