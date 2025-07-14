@@ -11,10 +11,24 @@ services:
     depends_on:
       - db
 
+
+     logging:  # ← Ajoutez cette section
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
+
   db:
     image: mysql:5.7
     container_name: db_memoire
     restart: always
+    logging:  # ← Ajoutez cette section
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
     environment:
       MYSQL_ROOT_PASSWORD: app_pass
       MYSQL_DATABASE: demandegrace
