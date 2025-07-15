@@ -1,0 +1,85 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Logs Sécurité & Web (Loki)",
+    "tags": ["logs", "loki", "security", "apache", "php"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "📌 Échecs SSH (auth.log)",
+        "type": "logs",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "{job=\"secure_logs\"} |= \"Failed password\"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "title": "🌐 Apache - Erreurs 404",
+        "type": "logs",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "{job=\"apache_logs\"} |= \" 404 \"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "title": "🐘 PHP - Fatal errors",
+        "type": "logs",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "{job=\"php_logs\"} |= \"Fatal error\"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 }
+      },
+      {
+        "title": "📈 Volume logs sécurite (SSH)",
+        "type": "timeseries",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "count_over_time({job=\"secure_logs\"} |= \"Failed password\" [1m])",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 }
+      },
+      {
+        "title": "📈 Volume logs Apache 404",
+        "type": "timeseries",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "count_over_time({job=\"apache_logs\"} |= \" 404 \" [1m])",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 }
+      },
+      {
+        "title": "🔎 Rechercher dans tous les logs (Filtrable)",
+        "type": "logs",
+        "datasource": "Loki",
+        "targets": [
+          {
+            "expr": "{job=~\".*\"}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 }
+      }
+    ],
+    "schemaVersion": 37,
+    "version": 1
+  },
+  "overwrite": true
+}
