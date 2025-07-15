@@ -18,3 +18,8 @@ RUN chown -R www-data:www-data /var/www/html
 # Activer Apache mod_rewrite si besoin
 RUN a2enmod rewrite
 
+
+# Activation de mod_status
+RUN a2enmod status
+COPY apache-status.conf /etc/apache2/conf-available/status.conf
+RUN a2enconf status
