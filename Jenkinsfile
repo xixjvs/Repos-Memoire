@@ -9,7 +9,7 @@ pipeline {
         INIT_SQL = "${WORKSPACE}/models/init.sql"
 
          // Configuration Docker
-        DOCKER_HUB_CREDENTIALS = 'jnk-creds' // ID Jenkins Credentials
+        DOCKER_HUB_CREDENTIALS = 'sonartoken' // ID Jenkins Credentials
         DOCKERHUB_USER = 'pauljosephd'       // ton nom d’utilisateur Docker Hub
         
         DOCKER_IMAGE = "pauljosephd/app_memoire" // ← ton Docker Hub
