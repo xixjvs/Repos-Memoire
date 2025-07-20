@@ -41,7 +41,7 @@ pipeline {
         stage('Analyse SonarQube') {
     steps {
         withSonarQubeEnv('SonarQube') {
-            withCredentials([string(credentialsId: 'toker-server', variable: 'SONAR_TOKEN')]) {
+            withCredentials([string(credentialsId: 'sonarvraitoken', variable: 'SONAR_TOKEN')]) {
                 echo '🔍 Exécution de l\'analyse SonarQube'
                 sh """
                     export PATH=$PATH:/var/lib/jenkins/sonar-scanner-5.0.1.3006-linux/bin
