@@ -1,0 +1,29 @@
+groups:
+- name: database-alerts
+  rules:
+  - alert: MySQLServiceDown
+    expr: up{job="mysql"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "MySQL est DOWN !"
+      description: "La base de données MySQL ne répond pas depuis 1 minute."
+      action: "Vérifier le conteneur MySQL avec 'docker logs db_memoire'"
+
+  - alert: NginxDown
+    expr: up{job="nginx"} == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Nginx est DOWN !"
+      description: "Le serveur Nginx ne répond pas."
+
+  - alert: HighMySQLConnections
+    expr: mysql_global_status_threads_connected > 50
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Trop de connexions MySQL ({{ $value }})"

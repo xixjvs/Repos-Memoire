@@ -1,0 +1,23 @@
+route:
+  receiver: 'email-alerts'
+  group_by: ['alertname']
+  group_wait: 10s
+  #group_interval: 5m
+  #repeat_interval: 3h
+
+receivers:
+- name: 'email-alerts'
+  email_configs:
+  - to: 'pauljosephvictorsandy.dogue@unchk.edu.sn'
+    from: 'pauljosephvictorsandy.dogue@unchk.edu.sn'
+    smarthost: 'smtp.gmail.com:587'
+    auth_username: 'pauljosephvictorsandy.dogue@unchk.edu.sn'
+    auth_identity: 'pauljosephvictorsandy.dogue@unchk.edu.sn'
+    auth_password: 'dgum njbu gzxe ajgk'  # Utilisez un mot de passe d'application
+    require_tls: true
+    headers:
+      Subject: '[URGENT] {{ .CommonAnnotations.summary }}'
+
+#- name: 'webhook-test'
+ # webhook_configs:
+  #- url: 'http://localhost:5000/'

@@ -1,56 +1,162 @@
 version: '3.8'
 
-
 services:
- app:
-   build: .
-   container_name: app_memoire_container
-   ports:
-     - "8888:80"
-   volumes:
-     - .:/var/www/html
-   depends_on:
-     - db
- db:
-   image: mysql:5.7
-   container_name: db_memoire
-   restart: always
-   logging:  # ← Ajoutez cette section
-     driver: "json-file"
-     options:
-       max-size: "10m"
-       max-file: "3"
-      
-   environment:
-     MYSQL_ROOT_PASSWORD: app_pass
-     MYSQL_DATABASE: demandegrace
-     MYSQL_USER: app_user
-     MYSQL_PASSWORD: app_pass
-   ports:
-     - "3306:3306"
-   volumes:
-     - db_data:/var/lib/mysql
-     - ./demandegrace.sql:/docker-entrypoint-initdb.d/init.sql
+  app:
+    build: .
+    container_name: app_memoire_container
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - monitoring
+    expose:
+      - "80"  # Expose le port 80 mais ne le mappe pas directement sur l'hôte
 
+  db:
+    image: mysql:5.7
+    container_name: db_memoire
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-papp_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
- cadvisor:
-   image: gcr.io/cadvisor/cadvisor:latest
-   container_name: cadvisor
-   ports:
-     - "8081:8080"
-   volumes:
-     - /:/rootfs:ro
-     - /var/run:/var/run:ro
-     - /sys:/sys:ro
-     - /var/lib/docker/:/var/lib/docker:ro
-   networks:
-     - monitoring
+    environment:
+      MYSQL_ROOT_PASSWORD: app_pass
+      MYSQL_DATABASE: demandegrace
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_pass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./demandegrace.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - monitoring
 
+  nginx-proxy:
+    image: nginx:1.25-alpine
+    container_name: nginx_proxy
+    ports:
+      - "8888:80"  # Port d'accès à votre application
+    volumes:
+     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+     # - .:/var/www/html:ro
+     # - ./security_rules:/etc/nginx/security:ro  # Pour les règles ModSecurity
+     #- ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+     #- ./nginx/modsec:/etc/nginx/modsec:ro
+     #- ./nginx/logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - monitoring
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.4.2
+    container_name: nginx_exporter
+    ports:
+      - "9113:9113"
+    command:
+      - '--nginx.scrape-uri=http://nginx-proxy:8889/metrics'
+    depends_on:
+      - nginx-proxy
+    networks:
+      - monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/run:/var_/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: mysqld_exporter
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:9104:9104"
+    environment:
+      DATA_SOURCE_NAME: "app_user:app_pass@tcp(db:3306)/demandegrace"
+    networks:
+      - monitoring
+    depends_on:
+      db:
+        condition: service_healthy
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - monitoring
+    
+  firewall:
+    image: alpine:3.18
+    container_name: firewall
+    command: |
+      sh -c "apk add --no-cache iptables telegraf gawk && 
+      chmod +x /app/iptables_metrics.sh &&
+      iptables -N FIREWALL &&
+      iptables -A FIREWALL -j LOG --log-prefix '[IPTABLES] ' &&
+      iptables -A FIREWALL -p tcp --dport 8888 -j ACCEPT &&
+      iptables -A FIREWALL -p tcp --dport 9110 -j ACCEPT &&
+      iptables -A FIREWALL -j DROP &&
+      iptables -I INPUT -j FIREWALL &&
+       telegraf --config /etc/telegraf/telegraf.conf &
+      sleep infinity"
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf  
+      - ./iptables_metrics.sh:/app/iptables_metrics.sh
+    ports:
+      - "9110:9110"    
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  iptables-exporter:
+    build:
+      context: .
+      dockerfile: iptables-exporter.Dockerfile
+    container_name: iptables-exporter
+    networks:
+      - monitoring 
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    ports:
+      - "9455:9455"
 
 volumes:
- db_data:
- grafana_data:
-
+  db_data:
+  grafana_data:
+  pfsense_data:
+  opnsense_data:
 
 networks:
- monitoring:
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.20.0.0/16"
+          gateway: "172.20.0.254"  

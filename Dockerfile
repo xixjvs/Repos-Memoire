@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Installer les extensions PHP nécessaires
+# Installer les dépendances (sans Telegraf)
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -9,17 +9,17 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && docker-php-ext-install pdo pdo_mysql mysqli
 
-# Copier le code source
 COPY . /var/www/html/
-
-# Donner les droits appropriés
 RUN chown -R www-data:www-data /var/www/html
 
-# Activer Apache mod_rewrite si besoin
-RUN a2enmod rewrite
+# Configuration Apache
+RUN a2enmod rewrite && a2enmod status
+RUN echo "ExtendedStatus On" > /etc/apache2/conf-available/status.conf && \
+    echo "<Location /server-status>" >> /etc/apache2/conf-available/status.conf && \
+    echo "    SetHandler server-status" >> /etc/apache2/conf-available/status.conf && \
+    echo "    Require local" >> /etc/apache2/conf-available/status.conf && \
+    echo "</Location>" >> /etc/apache2/conf-available/status.conf && \
+    a2enconf status
 
-
-# Activation de mod_status
-RUN a2enmod status
-COPY apache-status.conf /etc/apache2/conf-available/status.conf
-RUN a2enconf status
+EXPOSE 80
+CMD ["apache2-foreground"]

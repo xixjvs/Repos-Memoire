@@ -1,0 +1,51 @@
+FROM telegraf:1.30.3
+
+
+
+COPY iptables_metrics.sh /usr/local/bin/iptables_metrics.sh
+RUN chmod +x /usr/local/bin/iptables_metrics.sh
+
+#RUN apk add --no-cache iptables iptables-legacy gawk
+
+# Install required dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gawk \
+    iptables \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+# Copy your script
+COPY iptables_metrics.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/iptables_metrics.sh
+
+
+
+
+
+
+
+
+
+
+# Create telegraf config directory
+#RUN mkdir -p /etc/telegraf
+
+
+
+
+# Allow telegraf user to run iptables without password
+#RUN echo 'telegraf ALL=(root) NOPASSWD: /sbin/iptables' >> /etc/sudoers
+
+# Switch to telegraf user
+USER root
+
+COPY telegraf.conf /etc/telegraf/telegraf.conf
+
+
+EXPOSE 9111
+CMD ["telegraf", "--config", "/etc/telegraf/telegraf.conf"]
+
+# FROM telegraf:1.28  # Or newer
+#FROM telegraf:1.26-alpine
